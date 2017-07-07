@@ -1,0 +1,111 @@
+#!/bin/bash
+########################################################################
+# Build script for check_dht22
+# Copyright (c) 2017 Frostbyte <frostbytegr@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+########################################################################
+
+tagERROR='\e[0m'"[ "'\e[1;31m'"ERROR"'\e[0m'" ]"
+tagOK='\e[0m'"[ "'\e[1;32m'"OK"'\e[0m'" ]"
+tagGCC='\e[0m'"[ "'\e[1;33m'"GCC"'\e[0m'" ]"
+
+echo "Checking dependencies.."
+chkBinReqs=1
+
+binUnzip=`which unzip`
+binGcc=`which gcc`
+binAwk=`which awk`
+
+binaries=("unzip" "gcc" "awk")
+binPaths=("$binUnzip" "$binGcc" "$binAwk")
+binPkgs=("unzip" "gcc" "gawk")
+
+for (( index=0; index<${#binaries[@]}; index++ )); do
+	if [ -z ${binPaths[$index]} ]; then
+		echo -e "$tagERROR Cannot find ${binaries[$index]}. (hint: sudo apt-get ${binPkgs[$index]})"
+		chkBinReqs=0
+	else
+		echo -e "$tagOK Found ${binaries[$index]}: ${binPaths[$index]}"
+	fi
+done
+
+if [[ $chkBinReqs == 0 ]]; then
+	exit 1
+fi
+
+echo "Checking device.."
+SoC=`grep -Ei "^Hardware\s+:\s+.*" /proc/cpuinfo | awk '{print $3}'`
+case "$SoC" in
+	BCM2708)
+		deviceName="Raspberry Pi 1"
+		deviceFamily="raspberry"
+		;;
+	BCM2709)
+		deviceName="Raspberry Pi 2"
+		deviceFamily="raspberry"
+		;;
+	BCM2835)
+		deviceName="Raspberry Pi 3"
+		deviceFamily="raspberry"
+		;;
+	Rockchip)
+		deviceName="ASUS Tinker Board"
+		deviceFamily="tinkerboard"
+		;;
+	*)
+		echo -e "$tagERROR Unsupported device with CPU: $SoC"
+		exit 1
+esac
+echo -e "$tagOK $deviceName detected."
+
+pkgContents=$($binUnzip -Z -1 ThirdParty/wiringPi_$deviceFamily.zip)
+if ! $binUnzip ThirdParty/wiringPi_$deviceFamily.zip -d ThirdParty >/dev/null 2>&1; then
+	echo -e "$tagERROR Failed to extract the required device package."
+	exit 1
+fi
+
+if [ ! -d "bin" ] && ! mkdir bin; then
+	echo -e "$tagERROR Failed to create the bin folder."
+	exit 1
+fi
+
+wiringPiFiles="piHiPri.c softPwm.c softTone.c wiringPi.c"
+for file in $wiringPiFiles; do
+	gccExtra=$gccExtra" ThirdParty/wiringPi/$file"
+done
+
+echo "Compiling.."
+gccOutput=$($binGcc -o bin/check_dht22 check_dht22.c nagioshelper.c dht22.c$gccExtra -pthread -fdiagnostics-color=always 2>&1)
+gccResult=$?
+
+for file in $pkgContents; do
+	rm -r ThirdParty/$file
+done
+
+if [[ $1 == "-v" ]]; then
+	oIFS=$IFS
+	IFS=$'\n'
+	for line in $gccOutput; do
+		echo -e "$tagGCC \c" && echo $line
+	done
+	IFS=$oIFS
+fi
+
+if [[ $gccResult == 0 ]]; then
+	echo -e "$tagOK Compile successful. The executable can be found under: bin/check_dht22"
+else
+	echo -e "$tagERROR Compile failed."
+fi
+exit $gccResult
