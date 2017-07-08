@@ -23,7 +23,7 @@ Check environment temperature and humidity with DHT22 via GPIO
   - Temperature: from -40 to 80
   - Humidity: from 0 to 100
 * Output validation against the sensor's checksums and documented capabilities
-  - If measured data are invalid, will retry every 2 seconds for a maximum of 3 times
+  - If measured data are invalid, will retry every 4 seconds for a maximum of 2 times
 
 ## IV. SUPPORTED DEVICES:
 

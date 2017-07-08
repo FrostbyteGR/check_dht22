@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <sys/time.h>
 
 // wiringPi library
@@ -39,7 +40,7 @@
 #define	FALSE (1==2)
 
 // Sensor definitions
-#define QUERYRETRIES 3
+#define QUERYRETRIES 2
 
 // Function to enforce delay until the GPIO transitions from LOW to HIGH state
 static int sensorLowHighWait(int GPIO) {
@@ -116,6 +117,11 @@ static int querySensor(int GPIO, unsigned int results[4]) {
 	struct timeval now, then, took;
 	unsigned int queryChecksum=0, retrievedBytes[5];
 	int byte;
+
+	// Ensure the query is guaranteed a fresh timeslice
+	// threadSleepTime = expectedExecutionTime * kernelInterruptFrequency
+	// x = 16ms * 250Hz
+	nanosleep((const struct timespec[]){{4,0}}, NULL);
 
 	// Take a timestamp before the operation begins
 	gettimeofday(&then, NULL);
@@ -221,9 +227,6 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 				return result;
 			}
 		}
-
-		// Wait 2 seconds before retrying
-		delay(2000);
 	}
 
 	// Return the processed output
