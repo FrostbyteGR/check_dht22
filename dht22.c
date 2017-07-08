@@ -187,10 +187,6 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 	struct sensorOutput result;
 	unsigned int sensorData[4];
 
-	// Set the sensor output defaults
-	result.temperature=SENSOR_NA;
-	result.humidity=SENSOR_NA;
-
 	// If wiringPi fails to initialize
 	if (wiringPiSetup()==-1) {
 		// Throw an error and exit
@@ -228,6 +224,12 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 			}
 		}
 	}
+
+	// If this part is reached, no measurement was valid
+
+	// Set the output values to N/A
+	result.temperature=SENSOR_NA;
+	result.humidity=SENSOR_NA;
 
 	// Return the processed output
 	return result;
