@@ -36,8 +36,10 @@
 #include "dht22.h"
 
 // Boolean definitions
+#ifndef	TRUE
 #define	TRUE (1==1)
 #define	FALSE (1==2)
+#endif
 
 // Sensor definitions
 #define QUERYRETRIES 2
