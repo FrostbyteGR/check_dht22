@@ -38,7 +38,7 @@
 // Boolean definitions
 #ifndef	TRUE
 #define	TRUE (1==1)
-#define	FALSE (1==2)
+#define	FALSE (!TRUE)
 #endif
 
 // Sensor definitions
@@ -88,10 +88,9 @@ static int sensorLowHighWait(int GPIO) {
 // Function to retrieve a byte of data from the sensor
 static unsigned int retrieveByte(int GPIO) {
 	unsigned int result=0;
-	int bit;
 
 	// For every bit of the byte
-	for (bit=0; bit<8; ++bit) {
+	for (int bit=0; bit<8; ++bit) {
 		// If the sensor transition fails
 		if (!sensorLowHighWait(GPIO)) {
 			return 0;
@@ -118,7 +117,6 @@ static unsigned int retrieveByte(int GPIO) {
 static int querySensor(int GPIO, unsigned int results[4]) {
 	struct timeval now, then, took;
 	unsigned int queryChecksum=0, retrievedBytes[5];
-	int byte;
 
 	// Ensure the query is guaranteed a fresh timeslice
 	// threadSleepTime = expectedExecutionTime * kernelInterruptFrequency
@@ -148,7 +146,7 @@ static int querySensor(int GPIO, unsigned int results[4]) {
 	}
 
 	// Retrieve 5 bytes (40 bits) of information from the sensor
-	for (byte=0; byte<5; ++byte) {
+	for (int byte=0; byte<5; ++byte) {
 		retrievedBytes[byte]=retrieveByte(GPIO);
 
 		// For the first 4 bytes of information

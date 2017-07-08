@@ -156,12 +156,14 @@ static int validateThresholdRange (char *inputString) {
 
 // Validation function for user input: Threshold Ranges
 static struct execParameters validateThresholdRanges (struct execParameters params) {
+	// Divide the ranges into minimums and maximums
 	int tmpMinRanges[]={params.warn.temperature.min, params.crit.temperature.min};
 	int tmpMaxRanges[]={params.warn.temperature.max, params.crit.temperature.max};
 	int humMinRanges[]={params.warn.humidity.min, params.crit.humidity.min};
 	int humMaxRanges[]={params.warn.humidity.max, params.crit.humidity.max};
-	int range;
-	for (range=0; range<2; range++) {
+
+	// Loop through the ranges
+	for (int range=0; range<2; range++) {
 		// If any of the temperature ranges are not within the sensor's documented capabilities
 		if (((tmpMinRanges[range]<SENSOR_TMP_MIN || tmpMinRanges[range]>SENSOR_TMP_MAX) && tmpMinRanges[range]!=THRNG_DISABLE_MIN) \
 		|| ((tmpMaxRanges[range]<SENSOR_TMP_MIN || tmpMaxRanges[range]>SENSOR_TMP_MAX) && tmpMaxRanges[range]!=THRNG_DISABLE_MAX)) {
