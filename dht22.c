@@ -26,7 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
+#include <sched.h>
 #include <sys/time.h>
 
 // wiringPi library
@@ -42,7 +42,27 @@
 #endif
 
 // Sensor definitions
-#define QUERYRETRIES 2
+#define QUERYRETRIES 4
+
+// Function to set the scheduling policy with maximum priority
+static void setMaximumPriority() {
+	struct sched_param sched;
+
+	// Utilize the FIFO scheduler and assign the highest possible priority so context switching is avoided
+	memset(&sched, 0, sizeof(sched));
+	sched.sched_priority = sched_get_priority_max(SCHED_FIFO);
+	sched_setscheduler(0, SCHED_FIFO, &sched);
+}
+
+// Function to set the scheduling policy with default priority
+static void setDefaultPriority() {
+	struct sched_param sched;
+
+	// Revert back to the standard round-robin scheduler
+	memset(&sched, 0, sizeof(sched));
+	sched.sched_priority = 0;
+	sched_setscheduler(0, SCHED_OTHER, &sched);
+}
 
 // Function to enforce delay until the GPIO transitions from LOW to HIGH state
 static int sensorLowHighWait(int GPIO) {
@@ -118,10 +138,8 @@ static int querySensor(int GPIO, unsigned int results[4]) {
 	struct timeval now, then, took;
 	unsigned int queryChecksum=0, retrievedBytes[5];
 
-	// Ensure the query is guaranteed a fresh timeslice
-	// threadSleepTime = expectedExecutionTime * kernelInterruptFrequency
-	// x = 16ms * 250Hz
-	nanosleep((const struct timespec[]){{4,0}}, NULL);
+	// Set priority to maximum
+	setMaximumPriority();
 
 	// Take a timestamp before the operation begins
 	gettimeofday(&then, NULL);
@@ -167,6 +185,9 @@ static int querySensor(int GPIO, unsigned int results[4]) {
 	// Find out how long the operation took
 	timersub(&now, &then, &took);
 
+	// Set priority back to default
+	setDefaultPriority();
+
 	// The time it should take to complete the operation should be:
 	//	10ms + 40µs - for sensor to reset
 	//	+ 80µs + 80µs - for the sensor to transition from a LOW to a HIGH state
@@ -193,9 +214,6 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 		fprintf(stderr, "wiringPi failed to initialize.\n");
 		fflush(stderr);
 		exit(EXIT_FAILURE);
-	} else {
-		// Set a high priority schedulling for the running program
-		piHiPri(55);
 	}
 
 	// Set the sensor query retry count
@@ -207,7 +225,7 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 		memset(sensorData, 0, sizeof(sensorData));
 
 		// If the sensor query was successful
-		if(querySensor(GPIO, sensorData)) {
+		if (querySensor(GPIO, sensorData)) {
 			// Parse the temperature and humidity data
 			result.temperature=((float)sensorData[2]*256+(float)sensorData[3])/10;
 			result.humidity=((float)sensorData[0]*256+(float)sensorData[1])/10;
@@ -223,6 +241,9 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 				return result;
 			}
 		}
+		
+		// Wait for 2 seconds before retrying
+		delay(2000);
 	}
 
 	// If this part is reached, no measurement was valid
