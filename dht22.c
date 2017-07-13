@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <sched.h>
 #include <sys/time.h>
@@ -42,7 +43,7 @@
 #endif
 
 // Sensor definitions
-#define QUERYRETRIES 4
+#define QUERYRETRIES 5
 
 // Function to set the scheduling policy with maximum priority
 static void setMaximumPriority() {
@@ -106,8 +107,8 @@ static int sensorLowHighWait(int GPIO) {
 }
 
 // Function to retrieve a byte of data from the sensor
-static unsigned int retrieveByte(int GPIO) {
-	unsigned int result=0;
+static uint8_t retrieveByte(int GPIO) {
+	uint8_t result=0x00;
 
 	// For every bit of the byte
 	for (int bit=0; bit<8; ++bit) {
@@ -134,9 +135,9 @@ static unsigned int retrieveByte(int GPIO) {
 }
 
 // Function to query the sensor for information
-static int querySensor(int GPIO, unsigned int results[4]) {
+static int querySensor(int GPIO, uint8_t results[4]) {
 	struct timeval now, then, took;
-	unsigned int queryChecksum=0, retrievedBytes[5];
+	uint8_t queryChecksum=0x00, retrievedBytes[5];
 
 	// Set priority to maximum
 	setMaximumPriority();
@@ -206,7 +207,7 @@ static int querySensor(int GPIO, unsigned int results[4]) {
 // Main query function for the DHT22 sensor
 struct sensorOutput parseSensorOutput(int GPIO) {
 	struct sensorOutput result;
-	unsigned int sensorData[4];
+	uint8_t sensorData[4];
 
 	// If wiringPi fails to initialize
 	if (wiringPiSetup()==-1) {
@@ -227,8 +228,8 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 		// If the sensor query was successful
 		if (querySensor(GPIO, sensorData)) {
 			// Parse the temperature and humidity data
-			result.temperature=((float)sensorData[2]*256+(float)sensorData[3])/10;
-			result.humidity=((float)sensorData[0]*256+(float)sensorData[1])/10;
+			result.temperature=(sensorData[2]*256+sensorData[3])/10;
+			result.humidity=(sensorData[0]*256+sensorData[1])/10;
 
 			// Check and adjust for negative temperatures
 			if ((sensorData[2]&0x80)!=0) {
@@ -241,7 +242,7 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 				return result;
 			}
 		}
-		
+
 		// Wait for 2 seconds before retrying
 		delay(2000);
 	}
