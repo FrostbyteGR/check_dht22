@@ -38,12 +38,12 @@
 
 // Boolean definitions
 #ifndef	TRUE
-#define	TRUE (1==1)
-#define	FALSE (!TRUE)
+#	define	TRUE	(1==1)
+#	define	FALSE	(!TRUE)
 #endif
 
 // Sensor definitions
-#define QUERYRETRIES 5
+#define QUERYRETRIES 4
 
 // Function to set the scheduling policy with maximum priority
 static void setMaximumPriority() {
@@ -218,7 +218,7 @@ struct sensorOutput parseSensorOutput(int GPIO) {
 	}
 
 	// Set the sensor query retry count
-	int queryRetries=QUERYRETRIES;
+	int queryRetries=QUERYRETRIES+1;
 
 	// While there are still retries remaining
 	while (queryRetries--) {

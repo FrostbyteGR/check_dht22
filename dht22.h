@@ -24,11 +24,11 @@
  */
 
 // Sensor definitions
-#define SENSOR_NA 110
-#define SENSOR_TMP_MIN -40
-#define SENSOR_TMP_MAX 80
-#define SENSOR_HUM_MIN 0
-#define SENSOR_HUM_MAX 100
+#define SENSOR_NA		110
+#define SENSOR_TMP_MIN	-40
+#define SENSOR_TMP_MAX	80
+#define SENSOR_HUM_MIN	0
+#define SENSOR_HUM_MAX	100
 
 // Data structures
 struct sensorOutput {

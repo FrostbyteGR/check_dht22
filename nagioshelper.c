@@ -33,56 +33,58 @@
 #include "nagioshelper.h"
 
 // Error code definitions
-#define ERRCODE_USAGE 0
-#define ERRCODE_INVALID_GPIO 1
-#define ERRCODE_INVALID_THRESHOLD 2
-#define ERRCODE_INVALID_TMP_RANGE 3
-#define ERRCODE_INVALID_HUM_RANGE 4
-#define ERRCODE_INVALID_TMP_RANGES 5
-#define ERRCODE_INVALID_HUM_RANGES 6
+#define ERRCODE_USAGE				0
+#define ERRCODE_INVALID_GPIO		1
+#define ERRCODE_INVALID_THRESHOLD	2
+#define ERRCODE_INVALID_TMP_RANGE	3
+#define ERRCODE_INVALID_HUM_RANGE	4
+#define ERRCODE_INVALID_TMP_RANGES	5
+#define ERRCODE_INVALID_HUM_RANGES	6
 
 // Disabled threshold range definitions
 #define THRNG_DISABLE_MIN -110
 #define THRNG_DISABLE_MAX 110
 
 // Error handling function
-static void throwError (int errorCode) {
-	switch (errorCode) {
-		case 0:
+static void throwError(int errorCode) {
+	// Decide on which error to display
+	switch(errorCode) {
+		case ERRCODE_USAGE:
 			fprintf(stderr, "Usage:\n" \
 			"sudo check_dht22 -p <gpio_pin> [-w tmp_warn_range,hum_warn_range] [-c tmp_crit_range,hum_crit_range]\n" \
 			"Example: sudo check_dht22 -p 7 -w 10:40,30:70 -c 5:45,25:75\n");
 			break;
-		case 1:
+		case ERRCODE_INVALID_GPIO:
 			fprintf(stderr, "Invalid GPIO pin specified.\n" \
 			"Acceptable range: 0-31\n");
 			break;
-		case 2:
+		case ERRCODE_INVALID_THRESHOLD:
 			fprintf(stderr, "Invalid threshold range.\n" \
 			"Acceptable formats: N:N, N:, :N, or N\n");
 			break;
-		case 3:
+		case ERRCODE_INVALID_TMP_RANGE:
 			fprintf(stderr, "Invalid temperature range.\n" \
 			"Acceptable values: from %d to %d\n", SENSOR_TMP_MIN, SENSOR_TMP_MAX);
 			break;
-		case 4:
+		case ERRCODE_INVALID_HUM_RANGE:
 			fprintf(stderr, "Invalid humidity range.\n" \
 			"Acceptable values: from %d to %d\n", SENSOR_HUM_MIN, SENSOR_HUM_MAX);
 			break;
-		case 5:
+		case ERRCODE_INVALID_TMP_RANGES:
 			fprintf(stderr, "The temperature warning threshold range must be a subset of the temperature critical threshold range.\n");
 			break;
-		case 6:
+		case ERRCODE_INVALID_HUM_RANGES:
 			fprintf(stderr, "The humidity warning threshold range must be a subset of the humidity critical threshold range.\n");
 			break;
 	}
 
+	// Flush stderr and exit
 	fflush(stderr);
 	exit(EXIT_FAILURE);
 }
 
 // Default parameters generator function
-static struct execParameters defaultParameters () {
+static struct execParameters defaultParameters() {
 	struct execParameters defaults;
 
 	// Execution Parameter Defaults
@@ -100,7 +102,7 @@ static struct execParameters defaultParameters () {
 }
 
 // Normalize function for user input: Threshold Ranges
-static struct execParameters normalizeThresholdRanges (struct execParameters params) {
+static struct execParameters normalizeThresholdRanges(struct execParameters params) {
 	struct execParameters result=params;
 
 	// If no temperature warning minimum was supplied but a temperature critical minimum was
@@ -132,7 +134,7 @@ static struct execParameters normalizeThresholdRanges (struct execParameters par
 }
 
 // Validation function for user input: Threshold Range
-static int validateThresholdRange (char *inputString) {
+static int validateThresholdRange(char *inputString) {
 	// Convert input to integer
 	int result=atoi(inputString);
 
@@ -155,7 +157,7 @@ static int validateThresholdRange (char *inputString) {
 }
 
 // Validation function for user input: Threshold Ranges
-static struct execParameters validateThresholdRanges (struct execParameters params) {
+static struct execParameters validateThresholdRanges(struct execParameters params) {
 	// Divide the ranges into minimums and maximums
 	int tmpMinRanges[]={params.warn.temperature.min, params.crit.temperature.min};
 	int tmpMaxRanges[]={params.warn.temperature.max, params.crit.temperature.max};
@@ -199,7 +201,7 @@ static struct execParameters validateThresholdRanges (struct execParameters para
 }
 
 // Parser function for user input: GPIO
-static int parseGPIO (char *inputString) {
+static int parseGPIO(char *inputString) {
 	// Convert input to integer
 	int result=atoi(inputString);
 
@@ -222,7 +224,7 @@ static int parseGPIO (char *inputString) {
 }
 
 // Parser function for user input: Threshold Range
-static struct thresholdRange parseThresholdRange (char *inputString) {
+static struct thresholdRange parseThresholdRange(char *inputString) {
 	struct thresholdRange result;
 	char *delimiter;
 
@@ -281,7 +283,7 @@ static struct thresholdRange parseThresholdRange (char *inputString) {
 }
 
 // Parser function for user input: Threshold
-static struct threshold parseThreshold (char *inputString) {
+static struct threshold parseThreshold(char *inputString) {
 	struct threshold result;
 	char *delimiter;
 

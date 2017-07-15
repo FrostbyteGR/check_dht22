@@ -27,12 +27,12 @@
 #include "nagioshelper.h"
 
 // Main program
-int main (int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	// Parse the parameters supplied by the user
-	struct execParameters params = parseParameters(argc, argv);
+	struct execParameters params=parseParameters(argc, argv);
 
 	// Query the sensor for temperature and humidity information
-	struct sensorOutput result = parseSensorOutput(params.GPIO);
+	struct sensorOutput result=parseSensorOutput(params.GPIO);
 
 	// Respond and exit
 	return outputResults(params, result);
